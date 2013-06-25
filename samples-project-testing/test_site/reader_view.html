@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="../css/jquery-ui.css" />
         <script src="../lib/jquery-1.9.1.js" type="text/javascript"></script>
+        <script src="../lib/jquery.ui.core.js" type="text/javascript"></script>
+        <script src="../lib/jquery.ui.widget.js" type="text/javascript"></script>
+        <script src="../lib/jquery.ui.position.js" type="text/javascript"></script>
+        <script src="../lib/jquery.ui.menu.js" type="text/javascript"></script>
+        <script src="../lib/jquery.ui.autocomplete.js" type="text/javascript"></script>
         <script src="../lib/modernizr-2.5.3.min.js" type="text/javascript"></script>
         <script src="../lib/json2.js" type="text/javascript"></script>
         <script src="../lib/underscore-1.4.4.js" type="text/javascript"></script>
         <script src="../lib/backbone-0.9.10.js" type="text/javascript"></script>
         <script src="../lib/URI-1.10.0.js" type="text/javascript"></script>
-		
+        <script src="../lib/zip.js" type="text/javascript"></script>
+        <script src="../lib/zip-fs.js" type="text/javascript"></script>
+        <script src="../lib/zip-ext.js" type="text/javascript"></script>
+
+        <script src="../lib/epub_fetch_module.js" type="text/javascript"></script>
         <script src="../lib/epub_reflowable_module.js" type="text/javascript"></script>
         <script src="../lib/epub_reader_module.js" type="text/javascript"></script>
         <script src="../lib/epub_fixed_module.js" type="text/javascript"></script>
@@ -21,11 +31,92 @@
         <script src="showEpub.js" type="text/javascript"></script>
         
 		<script type="text/javascript">
+      $(function() {
+        $( "#epub-package-doc-path" ).autocomplete({
+          source: [
+            "accessible_epub_3-20121024.epub",
+            "./accessible_epub_3-20121024/EPUB/package.opf",
+            "cc-shared-culture-20120130.epub",
+            "./cc-shared-culture-20120130/EPUB/package.opf",
+            "childrens-literature-20120722.epub",
+            "./childrens-literature-20120722/EPUB/package.opf",
+            "childrens-media-query-20120412.epub",
+            "./childrens-media-query-20120412/EPUB/content.opf",
+            "cole-voyage-of-life-20120320.epub",
+            "./cole-voyage-of-life-20120320/EPUB/cole.opf",
+            "cole-voyage-of-life-tol-20120405 (1).epub",
+            "./cole-voyage-of-life-tol-20120405 (1)/EPUB/cole.opf",
+            "epub30-spec-20120228.epub",
+            "./epub30-spec-20120228/EPUB/package.opf",
+            "epub30-spec-20121128.epub",
+            "./epub30-spec-20121128/EPUB/package.opf",
+            "georgia-cfi-20120521 (2).epub",
+            "./georgia-cfi-20120521 (2)/EPUB/package.opf",
+            "georgia-pls-ssml-20120322 (1).epub",
+            "./georgia-pls-ssml-20120322 (1)/EPUB/package.opf",
+            "GhV-oeb-page-20121015.epub",
+            "./GhV-oeb-page-20121015/EPUB/content.opf",
+            "haruko-html-jpeg-20120524 (1).epub",
+            "./haruko-html-jpeg-20120524 (1)/OPS/package.opf",
+            "haruko-jpeg-20120814.epub",
+            "./haruko-jpeg-20120814/OPS/package.opf",
+            "hefty-water-20120404.epub",
+            "./hefty-water-20120404/EPUB/package.opf",
+            "israelsailing_20120909.epub",
+            "./israelsailing_20120909/OEPBS/content.opf",
+            "jlreq_20120525.epub",
+            "jlreq_20120525_ja (1).epub",
+            "./jlreq_20120525_ja (1)/OEBPS/jlreq_ja.opf",
+            "./jlreq_20120525/OEBPS/jlreq.opf",
+            "kusamakura-japanese-vertical-writing-20121124.epub",
+            "./kusamakura-japanese-vertical-writing-20121124/OPS/package.opf",
+            "linear-algebra-20120306.epub",
+            "./linear-algebra-20120306 (1)/EPUB/package.opf",
+            "mahabharata-20120305.epub",
+            "./mahabharata-20120305/EPUB/mahabharata.opf",
+            "moby-dick-20120118.epub",
+            "./moby-dick-20120118/OPS/package.opf",
+            "moby-dick-mo-20120214 (2).epub",
+            "./moby-dick-mo-20120214 (2)/OPS/package.opf",
+            "page-blanche-20121022.epub",
+            "./page-blanche-20121022/EPUB/package.opf",
+            "page-blanche-bitmaps-in-spine-20120809.epub",
+            "./page-blanche-bitmaps-in-spine-20120809/EPUB/package.opf",
+            "regime-anticancer-arabic-20121022.epub",
+            "./regime-anticancer-arabic-20121022/EPUB/package.opf",
+            "sash-for-you-20120827.epub",
+            "./sash-for-you-20120827/OEBPS/sash_for_you.opf",
+            "sous-le-vent-20121022.epub",
+            "./sous-le-vent-20121022/EPUB/package.opf",
+            "sous-le-vent_svg-in-spine-20121022.epub",
+            "./sous-le-vent_svg-in-spine-20121022/EPUB/package.opf",
+            "svg-in-spine-20120417.epub",
+            "./svg-in-spine-20120417/OPS/content.opf",
+            "trees-20120417 (1).epub",
+            "./trees-20120417 (1)/EPUB/package.opf",
+            "wasteland-20120118 (1).epub",
+            "./wasteland-20120118 (1)/EPUB/wasteland.opf",
+            "wasteland-otf-20120118.epub",
+            "./wasteland-otf-20120118/EPUB/wasteland.opf",
+            "wasteland-otf-obf-20120118 (1).epub",
+            "./wasteland-otf-obf-20120118 (1)/EPUB/wasteland.opf",
+            "wasteland-woff-20120118.epub",
+            "./wasteland-woff-20120118/EPUB/wasteland.opf",
+            "wasteland-woff-obf-20120118 (1).epub",
+            "./wasteland-woff-obf-20120118 (1)/EPUB/wasteland.opf",
+            "widget-figure-gallery-20121022.epub",
+            "./widget-figure-gallery-20121022/EPUB/package.opf",
+            "widget-quiz-20121022.epub",
+            "./widget-quiz-20121022/EPUB/package.opf"
+          ]
+        })
+      });
 
             $(document).ready(function () {
 
                 $("#show-epub").on("click", function () {
                     $("#reader").html("");
+                    $('#para-messages').text('Please wait, loading...');
                     testEpub($("#epub-package-doc-path").val());
                 });
             });
@@ -48,7 +139,15 @@
         </script>
     </head>
     <body>
-        <input id="epub-package-doc-path" type="text" style="width:400px;" value="accessible_epub_3-20121024/EPUB/package.opf" /><button id="show-epub">Show epub</button>
+        <p>
+          <input id="epub-package-doc-path" type="text" style="width:400px;" value="accessible_epub_3-20121024/EPUB/package.opf" />
+          <button id="show-epub">Show epub</button>
+          <button id="btn-left">&lt;- Page left</button>
+          <button id="btn-right">Page right -&gt;</button>
+        </p>
+        <p id="para-messages">
+
+        </p>
         <div id="reader" style="height:800px; width:100%">
         </div>
     </body>

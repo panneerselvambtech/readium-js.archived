@@ -15,7 +15,10 @@ EpubReader.EpubReader = Backbone.Model.extend({
         this.set("bindings", spineInfo.bindings);
         this.set("annotations", spineInfo.annotations);
 
-        this.loadStrategy = new EpubReader.LoadStrategy({ spineInfo : this.get("spine")});
+        this.loadStrategy = new EpubReader.LoadStrategy({
+            epubFetch: this.get("epubFetch"),
+            spineInfo : this.get("spine")
+        });
         this.cfi = new EpubCFIModule();
     },
 
@@ -266,11 +269,12 @@ EpubReader.EpubReader = Backbone.Model.extend({
         var contentDocHref = contentDocumentHref;
         var foundSpineItem;
 
-        foundSpineItem = _.find(this.get("spine"), function (spineItem, index) { 
-
+        foundSpineItem = _.find(this.get("spine"), function (spineItem, index) {
+            console.log('looking for [' + contentDocumentHref + '] in ' + spineItem.contentDocumentURI);
             var uri = new URI(spineItem.contentDocumentURI);
             var filename = uri.filename();
             if (contentDocumentHref.trim() === filename.trim()) {
+                console.log('FOUND [' + contentDocumentHref + '] in [' + filename + ']!');
                 return true;
             }
         });

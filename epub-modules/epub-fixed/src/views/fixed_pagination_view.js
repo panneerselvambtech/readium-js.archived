@@ -11,7 +11,11 @@ EpubFixed.FixedPaginationView = Backbone.View.extend({
 	initialize : function (options) {
 
 		var that = this;
-		this.fixedPageViews = new EpubFixed.FixedPageViews({ spineObjects : options.spineObjects });
+        this.epubFetch = options.epubFetch;
+		this.fixedPageViews = new EpubFixed.FixedPageViews({
+            epubFetch: options.epubFetch,
+            spineObjects : options.spineObjects
+        });
 		this.viewerSettings = options.viewerSettings;
 
 		// Rationale: Propagate the loaded event after all the content documents are loaded

@@ -1,18 +1,17 @@
-var EpubParserModule = function(packageDocumentURI, packageDocumentXML) {
+var EpubParserModule = function(epubFetch) {
 
     var EpubParser = {};
     <%= package_document_parser %>
 
     var packageDocParser = new EpubParser.PackageDocumentParser({
-        packageDocumentURI : packageDocumentURI,
-        packageDocumentXML : packageDocumentXML
+        epubFetch : epubFetch
     });
 
     // Description: The public interface
     return {
 
-        parse : function () {
-            return packageDocParser.parse();
+        parse : function (callback) {
+            return packageDocParser.parse(callback);
         }
     };
 };

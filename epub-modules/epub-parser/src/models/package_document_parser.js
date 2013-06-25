@@ -4,59 +4,59 @@
 EpubParser.PackageDocumentParser = Backbone.Model.extend({
 
     initialize : function (attributes, options) {
-
-        this.packageDocumentURI = new URI(this.get("packageDocumentURI"));
-        var xml = this.get("packageDocumentXML");
-        if (typeof(xml) === "string" ) {
-            var parser = new window.DOMParser;
-            xmlDom = parser.parseFromString(xml, 'text/xml');
-            this.set({ xmlDom : xmlDom });
-        }
-        else {
-            throw new Error("XML string representation of package document is required");
-        }
+        var thisParser = this;
+        var epubFetch = thisParser.get('epubFetch');
+        var deferredXmlDom = $.Deferred();
+        thisParser.set('deferredXmlDom', deferredXmlDom);
+        epubFetch.getPackageDom(function(packageDom){
+            thisParser.set('xmlDom', packageDom);
+            deferredXmlDom.resolve(packageDom);
+        });
     },
 
     // Parse an XML package document into a javascript object
-    parse : function() {
+    parse : function(callback) {
+        var thisParser = this;
+        var deferredXmlDom = thisParser.get('deferredXmlDom');
+        deferredXmlDom.done(function(xmlDom){
+            var json, manifest, cover;
 
-        var json, manifest, cover, xmlDom;
-        var xmlDom = this.get("xmlDom");
+            json = {};
+            json.metadata = thisParser.getJsonMetadata(xmlDom);
+            json.bindings = thisParser.getJsonBindings(xmlDom);
+            json.spine = thisParser.getJsonSpine(xmlDom);
+            json.manifest = thisParser.getJsonManifest(xmlDom);
 
-        json = {};
-        json.metadata = this.getJsonMetadata(xmlDom);
-        json.bindings = this.getJsonBindings(xmlDom);
-        json.spine = this.getJsonSpine(xmlDom);
-        json.manifest = this.getJsonManifest(xmlDom);
+            // parse the page-progression-direction if it is present
+            json.paginate_backwards = thisParser.paginateBackwards(xmlDom);
 
-        // parse the page-progression-direction if it is present
-        json.paginate_backwards = this.paginateBackwards(xmlDom);
+            // try to find a cover image
+            cover = thisParser.getCoverHref(xmlDom);
+            if (cover) {
+                json.metadata.cover_href = cover;
+            }
+            if (json.metadata.layout === "pre-paginated") {
+                json.metadata.fixed_layout = true;
+            }
 
-        // try to find a cover image
-        cover = this.getCoverHref(xmlDom);
-        if (cover) {
-            json.metadata.cover_href = cover;
-        }       
-        if (json.metadata.layout === "pre-paginated") {
-            json.metadata.fixed_layout = true;
-        }
-        
-        // THIS SHOULD BE LEFT IN (BUT COMMENTED OUT), AS MO SUPPORT IS TEMPORARILY DISABLED
-        // create a map of all the media overlay objects
-        // json.mo_map = this.resolveMediaOverlays(json.manifest);
+            // THIS SHOULD BE LEFT IN (BUT COMMENTED OUT), AS MO SUPPORT IS TEMPORARILY DISABLED
+            // create a map of all the media overlay objects
+            // json.mo_map = this.resolveMediaOverlays(json.manifest);
 
-        // parse the spine into a proper collection
-        json.spine = this.parseSpineProperties(json.spine);
+            // parse the spine into a proper collection
+            json.spine = thisParser.parseSpineProperties(json.spine);
 
-        // return the parse result
-        return json;
+            // return the parse result
+            callback(json);
+        });
     },
 
     getJsonSpine : function () {
+        var thisParser = this;
 
         var $spineElements;
         var jsonSpine = [];
-        var xmlDom = this.get("xmlDom");
+        var xmlDom = thisParser.get("xmlDom");
 
         $spineElements = $("spine", xmlDom).children();
         $.each($spineElements, function (spineElementIndex, currSpineElement) {
@@ -76,8 +76,9 @@ EpubParser.PackageDocumentParser = Backbone.Model.extend({
     },
 
     getJsonMetadata : function () {
+        var thisParser = this;
 
-        var xmlDom = this.get("xmlDom");
+        var xmlDom = thisParser.get("xmlDom");
         var $metadata = $("metadata", xmlDom);
         var jsonMetadata = {};
 
@@ -103,8 +104,9 @@ EpubParser.PackageDocumentParser = Backbone.Model.extend({
 
     getJsonManifest : function () {
 
-        var that = this;
-        var xmlDom = this.get("xmlDom");
+        var thisParser = this;
+        var epubFetch = thisParser.get('epubFetch');
+        var xmlDom = thisParser.get("xmlDom");
         var $manifestItems = $("manifest", xmlDom).children(); 
         var jsonManifest = [];
 
@@ -114,14 +116,20 @@ EpubParser.PackageDocumentParser = Backbone.Model.extend({
             var currManifestElementHref = $currManifestElement.attr("href") ? $currManifestElement.attr("href") : "";
             var manifestItem = {
 
-                contentDocumentURI : that.resolveURI(currManifestElementHref),
+                contentDocumentURI : epubFetch.resolveURI(currManifestElementHref),
                 href : currManifestElementHref,
                 id : $currManifestElement.attr("id") ? $currManifestElement.attr("id") : "", 
                 media_overlay : $currManifestElement.attr("media-overlay") ? $currManifestElement.attr("media-overlay") : "",
                 media_type : $currManifestElement.attr("media-type") ? $currManifestElement.attr("media-type") : "",
                 properties : $currManifestElement.attr("properties") ? $currManifestElement.attr("properties") : ""
             };
-
+            console.log('pushing manifest item to JSON manifest.');
+            console.log('currManifestElementHref:');
+            console.log(currManifestElementHref);
+            console.log('manifestItem.contentDocumentURI:');
+            console.log(manifestItem.contentDocumentURI);
+            console.log('manifestItem:');
+            console.log(manifestItem);
             jsonManifest.push(manifestItem);
         });
 
@@ -242,13 +250,5 @@ EpubParser.PackageDocumentParser = Backbone.Model.extend({
 
         var xmlDom = this.get("xmlDom");
         return $('spine', xmlDom).attr('page-progression-direction') === "rtl";
-    },
-
-    resolveURI : function (epubResourceURI) {
-
-        // Make absolute to the package document path
-        var epubResourceRelURI = new URI(epubResourceURI);
-        var epubResourceAbsURI = epubResourceRelURI.absoluteTo(this.packageDocumentURI);
-        return epubResourceAbsURI.toString();
     }
 });

@@ -9,168 +9,123 @@ RWCDemoApp.setModuleContainerHeight = function () {
     $("#epub-reader-container").css({ "height" : $(document).height() * 0.85 + "px" });
 };
 
-RWCDemoApp.parseXMLFromDOM = function (data) {
-    var serializer = new XMLSerializer();
-    var packageDocumentXML = serializer.serializeToString(data);
-    return packageDocumentXML;
-};
+// This function will retrieve a package document and load an EPUB
+RWCDemoApp.loadAndRenderEpub = function (packageDocumentURL) {
+
+    var libDir = '../lib/';
+
+    var that = this;
+
+    // Clear the viewer, if it has been defined -> to load a new epub
+    RWCDemoApp.epubViewer = undefined;
 
 
+    // Get the HTML element to bind the module reader to
+    var elementToBindReaderTo = $("#reader");
 
-            // This function will retrieve a package document and load an EPUB
-            RWCDemoApp.loadAndRenderEpub = function (packageDocumentURL) {
+    // Create an object of viewer preferences
+    var viewerPreferences = {
+        fontSize: 12,
+        syntheticLayout: false,
+        currentMargin: 3,
+        tocVisible: false,
+        currentTheme: "default"
+    };
+    var currLayoutIsSynthetic = viewerPreferences.syntheticLayout;
 
-                var that = this;
+    // THE MOST IMPORTANT PART - INITIALIZING THE SIMPLE RWC MODEL
+    RWCDemoApp.epubViewer =
+        new SimpleReadiumJs(elementToBindReaderTo, viewerPreferences, packageDocumentURL, libDir, "lazy",
+            function (epubViewer) {
+                RWCDemoApp.epubViewer = epubViewer;
+                // Set a fixed height for the epub viewer container, as a function of the document height
+                RWCDemoApp.setModuleContainerHeight();
 
-                // Clear the viewer, if it has been defined -> to load a new epub
-                RWCDemoApp.epubViewer = undefined;
+                // These are application specific handlers that wire the HTML to the SimpleRWC module API
+                /*
+                 // Set handlers for click events
+                 $("#previous-page-btn").unbind("click");
+                 $("#previous-page-btn").on("click", function () {
+                 RWCDemoApp.epubViewer.previousPage(function () {
+                 console.log("went to previous page");
+                 });
+                 });
 
-                // Get the package document and load the modules
-                $.ajax({
-                    url : packageDocumentURL,
-                    success : function (result) {
+                 $("#next-page-btn").unbind("click");
+                 $("#next-page-btn").on("click", function () {
+                 RWCDemoApp.epubViewer.nextPage(function () {
+                 console.log("went to next page");
+                 });
+                 });
 
-                        // Get the HTML element to bind the module reader to
-                        var elementToBindReaderTo = $("#reader");
+                 $("#toggle-synthetic-btn").unbind("click");
+                 $("#toggle-synthetic-btn").on("click", function () {
 
-                        // Create an object of viewer preferences
-                        var viewerPreferences = {
-                            fontSize : 12,
-                            syntheticLayout : false,
-                            currentMargin : 3,
-                            tocVisible : false,
-                            currentTheme : "default"
-                        };
-                        var currLayoutIsSynthetic = viewerPreferences.syntheticLayout;
+                 if (currLayoutIsSynthetic) {
+                 RWCDemoApp.epubViewer.setSyntheticLayout(false);
+                 currLayoutIsSynthetic = false;
+                 $("#single-page-ico").show();
+                 $("#synthetic-page-ico").hide();
+                 }
+                 else {
+                 RWCDemoApp.epubViewer.setSyntheticLayout(true);
+                 currLayoutIsSynthetic = true;
+                 $("#single-page-ico").hide();
+                 $("#synthetic-page-ico").show();
+                 }
+                 });
+                 */
 
-                        if (result.nodeType) {
-                            result = RWCDemoApp.parseXMLFromDOM(result);
-                        }
+                var pressLeft = function () {
+                    console.log('showEpub.js: pressed left.');
+                    RWCDemoApp.epubViewer.previousPage();
+                };
+                var pressRight = function () {
+                    console.log('showEpub.js: pressed right.');
+                    RWCDemoApp.epubViewer.nextPage();
+                };
 
-                        // THE MOST IMPORTANT PART - INITIALIZING THE SIMPLE RWC MODEL
-                        RWCDemoApp.epubViewer = new SimpleReadiumJs(
-                            elementToBindReaderTo, viewerPreferences, packageDocumentURL, result, "lazy"
-                        );
+                RWCDemoApp.epubViewer.on("keydown-left", pressLeft, that);
+                RWCDemoApp.epubViewer.on("keydown-right", pressRight, that);
 
-                        // Set a fixed height for the epub viewer container, as a function of the document height
-                        RWCDemoApp.setModuleContainerHeight();
-
-                        // These are application specific handlers that wire the HTML to the SimpleRWC module API
-						/*
-                        // Set handlers for click events
-                        $("#previous-page-btn").unbind("click");
-                        $("#previous-page-btn").on("click", function () {
-                            RWCDemoApp.epubViewer.previousPage(function () {
-                                console.log("went to previous page");
-                            });
-                        });
-
-                        $("#next-page-btn").unbind("click");
-                        $("#next-page-btn").on("click", function () {
-                            RWCDemoApp.epubViewer.nextPage(function () {
-                                console.log("went to next page");
-                            });
-                        });
-
-                        $("#toggle-synthetic-btn").unbind("click");
-                        $("#toggle-synthetic-btn").on("click", function () {
-
-                            if (currLayoutIsSynthetic) {
-                                RWCDemoApp.epubViewer.setSyntheticLayout(false);
-                                currLayoutIsSynthetic = false;
-                                $("#single-page-ico").show();
-                                $("#synthetic-page-ico").hide();
-                            }
-                            else {
-                                RWCDemoApp.epubViewer.setSyntheticLayout(true);
-                                currLayoutIsSynthetic = true;
-                                $("#single-page-ico").hide();
-                                $("#synthetic-page-ico").show();
-                            }
-                        });
-*/
-						
-		                var pressLeft = function () { RWCDemoApp.epubViewer.previousPage(); };
-		                var pressRight = function () { RWCDemoApp.epubViewer.nextPage(); };
-
-		                RWCDemoApp.epubViewer.on("keydown-left", pressLeft, that);
-		                RWCDemoApp.epubViewer.on("keydown-right", pressRight, that);
-
-		                RWCDemoApp.epubViewer.on("internalLinkClicked", function(e){
-		                    var href;
-		                    e.preventDefault();
-
-		                    // Check for both href and xlink:href attribute and get value
-		                    if (e.currentTarget.attributes["xlink:href"]) {
-		                        href = e.currentTarget.attributes["xlink:href"].value;
-		                    }
-		                    else {
-		                        href = e.currentTarget.attributes["href"].value;
-		                    }
-
-		                    var spineIndex = RWCDemoApp.epubViewer.findSpineIndex(href);
-		                    RWCDemoApp.epubViewer.showSpineItem(spineIndex);
-
-		                }, that);
-
-                        // Render the reader
-                        RWCDemoApp.epubViewer.on("epubLoaded", function () { 
-                            RWCDemoApp.epubViewer.showSpineItem(0, function () {
-                                console.log("showed first spine item"); 
-								
-//								alert("Reading System name: " + navigator.epubReadingSystem.name);
-                            });
-                        }, that);
-						
-                        RWCDemoApp.epubViewer.render(0);
-                    }
+                console.log('registering handlers for btn-left and btn-right');
+                $("#btn-left").on("click", function () {
+                    pressLeft();
                 });
-            };
+                $("#btn-right").on("click", function () {
+                    pressRight();
+                });
 
 
+                RWCDemoApp.epubViewer.on("internalLinkClicked", function (e) {
+                    var href;
+                    e.preventDefault();
 
-var showEpub = function (packageDocumentPath) {
+                    // Check for both href and xlink:href attribute and get value
+                    if (e.currentTarget.attributes["xlink:href"]) {
+                        href = e.currentTarget.attributes["xlink:href"].value;
+                    } else {
+                        href = e.currentTarget.attributes["href"].value;
+                    }
 
-    var reader;
-    $.ajax({
-        url : packageDocumentPath,
-        async : false,
-		error : function(xhr, status)
-		{
-//			alert(status);
-			console.log(xhr);
-		},
-        success : function (result) {
-            
-          var packageDocumentXML = result;
-          var epubParser = new EpubParserModule(packageDocumentPath, packageDocumentXML);
-          var packageDocumentObject = epubParser.parse();
-          var epub = new EpubModule(packageDocumentObject, packageDocumentXML);
-          var spineInfo = epub.getSpineInfo();
-          var spineObjects = spineInfo.spine;
+                    var spineIndex = RWCDemoApp.epubViewer.findSpineIndex(href);
+                    RWCDemoApp.epubViewer.showSpineItem(spineIndex);
 
-          var viewerSettings = {
-              fontSize : 12,
-              syntheticLayout : false,
-              currentMargin : 3,
-              tocVisible : false,
-              currentTheme : "default"
-          };
+                }, that);
 
-          var packDocDOM = (new window.DOMParser()).parseFromString(packageDocumentXML, "text/xml");
-//          console.log(packDocDOM);
-          reader = new EpubReaderModule(
-              $("#reader"),
-              spineInfo,
-              viewerSettings,
-              packDocDOM
-          );
-        }
-    });
+                // Render the reader
+                RWCDemoApp.epubViewer.on("epubLoaded", function () {
+                    RWCDemoApp.epubViewer.showSpineItem(0, function () {
+                        console.log("showed first spine item");
+                        $('#para-messages').text('');
 
-    return reader;
+                        //								alert("Reading System name: " + navigator.epubReadingSystem.name);
+                    });
+                }, that);
+
+                RWCDemoApp.epubViewer.render(0);
+            });
 };
-
 
 
 var testEpub = function (packageDocumentPath) {

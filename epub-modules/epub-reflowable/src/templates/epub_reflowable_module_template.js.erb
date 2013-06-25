@@ -1,4 +1,4 @@
-var EpubReflowableModule = function(spineObject, viewerSettingsObject, CFIAnnotations, bindings) {
+var EpubReflowableModule = function(epubFetch, spineObject, viewerSettingsObject, CFIAnnotations, bindings) {
 
     var EpubReflowable = {};
 
@@ -14,6 +14,7 @@ var EpubReflowableModule = function(spineObject, viewerSettingsObject, CFIAnnota
     <%= reflowable_pagination_view %>
 
     var reflowableView = new EpubReflowable.ReflowablePaginationView({
+        epubFetch : epubFetch,
         spineItem : spineObject,
         viewerSettings : viewerSettingsObject,
         contentDocumentCFIs : CFIAnnotations,

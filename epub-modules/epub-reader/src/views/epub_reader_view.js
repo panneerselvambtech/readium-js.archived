@@ -14,8 +14,10 @@ EpubReader.EpubReaderView = Backbone.View.extend({
     initialize : function (options) {
 
         var that = this;
-        this.packageDocumentDOM = options.packageDocumentDOM;
+
+        this.epubFetch = options.epubFetch;
         this.reader = new EpubReader.EpubReader({
+            epubFetch: options.epubFetch,
             spineInfo : options.spineInfo,
             viewerSettings : options.viewerSettings,
             parentElement : options.readerElement,
@@ -72,24 +74,20 @@ EpubReader.EpubReaderView = Backbone.View.extend({
     // Rationale: As with the CFI library API, it is up to calling code to ensure that the content document CFI component is
     //   is a reference into the content document pointed to by the supplied spine index. 
     showPageByCFI : function (CFI, callback, callbackContext) {
-
+        var thisView = this;
         // Dereference CFI, get the content document href
         var contentDocHref;
         var spineIndex;
         var pagesView;
-        try {
-            
-            contentDocHref = this.cfi.getContentDocHref(CFI, this.packageDocumentDOM);
-            spineIndex = this.reader.findSpineIndex(contentDocHref);
-            this.showSpineItem(spineIndex, function () {
-                pagesView = this.reader.getCurrentPagesView();
+        thisView.epubFetch.getPackageDom(function (packageDom) {
+            contentDocHref = thisView.cfi.getContentDocHref(CFI, packageDom);
+            spineIndex = thisView.reader.findSpineIndex(contentDocHref);
+            thisView.showSpineItem(spineIndex, function () {
+                pagesView = thisView.reader.getCurrentPagesView();
                 pagesView.showPageByCFI(CFI);
                 callback.call(callbackContext);
-            }, this);
-        }
-        catch (error) {
-            throw error; 
-        }
+            }, thisView);
+        });
     },
 
     showPageByElementId : function (spineIndex, elementId, callback, callbackContext) { 
@@ -230,16 +228,13 @@ EpubReader.EpubReaderView = Backbone.View.extend({
 
     // ----------------------- Private Helpers -----------------------------------------------------------
 
-    getSpineIndexFromCFI : function (CFI) {
-
-        try {
-            var contentDocumentHref = this.cfi.getContentDocHref(CFI, this.packageDocumentDOM);
-            var spineIndex = this.reader.findSpineIndex(contentDocumentHref);
-            return spineIndex;
-        }
-        catch (error) {
-            throw error;
-        }
+    getSpineIndexFromCFI : function (CFI, callback) {
+        var thisView = this;
+        thisView.epubFetch.getPackageDom(function(packageDom){
+            var contentDocumentHref = thisView.cfi.getContentDocHref(CFI, this.packageDocumentDOM);
+            var spineIndex = thisView.reader.findSpineIndex(contentDocumentHref);
+            callback(spineIndex);
+        });
     },
 
     getPageNumber : function (fixedPagesViewInfo, spineIndex) {

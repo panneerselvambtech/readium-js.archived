@@ -20,14 +20,16 @@ EpubFixed.FixedPageViews = Backbone.Model.extend({
     },
 
     renderFixedPages : function (bindingElement, viewerSettings, linkClickHandler, handlerContext) {
+        var that = this;
 
         // Reset the default for a synthetic layout
         if (viewerSettings.syntheticLayout) {
             this.set("currentPages", [1, 2]);
         }
 
-        this.loadPageViews(viewerSettings);
-        this.renderAll(bindingElement, linkClickHandler, handlerContext);
+        this.loadPageViews(viewerSettings, function() {
+            that.renderAll(bindingElement, linkClickHandler, handlerContext)
+        });
     },
 
     nextPage : function (twoUp, pageSetEventContext) {
@@ -135,30 +137,59 @@ EpubFixed.FixedPageViews = Backbone.Model.extend({
         return this.get("fixedPages").length;
     },
 
-    loadPageViews : function (viewerSettings) {
+    initializeFixedImagePageInfo: function (spineObject, imageSrc, viewerSettings, fixedPageViewInfo, callback) {
+        var that = this;
+        var fixedPageView;
+        fixedPageView = that.initializeImagePage(spineObject.pageSpread, imageSrc, viewerSettings);
+        // Initialize info object
+        fixedPageViewInfo.fixedPageView = fixedPageView;
+        fixedPageView.pageType = spineObject.fixedLayoutType;
+        fixedPageView.isRendered = false;
+        fixedPageView.spineIndex = spineObject.spineIndex;
+
+        callback();
+    },
+    loadPageViews : function (viewerSettings, finishCallback) {
 
         var that = this;
+        var epubFetch = this.get('epubFetch');
+        var initializationDeferreds = [];
         _.each(this.get("spineObjects"), function (spineObject) {
 
-            var fixedPageView;
-            var fixedPageViewInfo;
+            var spineObjectInitializationDeferred = $.Deferred();
+            initializationDeferreds.push(spineObjectInitializationDeferred);
+            var fixedPageViewInfo = {};
             if (spineObject.fixedLayoutType === "image") {
-                fixedPageView = that.initializeImagePage(spineObject.pageSpread, spineObject.contentDocumentURI, viewerSettings);
+                var imageSrc = spineObject.contentDocumentURI;
+                console.log('initializing ImagePage, spineObject.contentDocumentURI: ' + imageSrc);
+                if (!epubFetch.isPackageExploded()) {
+                    // FIXME: make sure the path's relative to package
+                    epubFetch.relativeToPackageFetchFileContents(imageSrc, 'blob', function (imageData) {
+                        imageSrc = window.URL.createObjectURL(imageData);
+
+                        that.initializeFixedImagePageInfo(spineObject, imageSrc, viewerSettings, fixedPageViewInfo, spineObjectInitializationDeferred.resolve);
+                    }, function (err) {
+                        console.error('Fatal ERROR when initializing ImagePage:');
+                        console.error(err);
+                    })
+                } else {
+                    that.initializeFixedImagePageInfo(spineObject, imageSrc, viewerSettings, fixedPageViewInfo, spineObjectInitializationDeferred.resolve);
+                }
             }
             // SVG and all others
             else {
+                var fixedPageView;
+                console.log('initializing FixedPage, spineObject.contentDocumentURI: ' + spineObject.contentDocumentURI)
                 fixedPageView = that.initializeFixedPage(spineObject.pageSpread, spineObject.contentDocumentURI, viewerSettings);
+                // TODO: create fixedPageViewInfo, push onto that.get("fixedPages")?
+                spineObjectInitializationDeferred.resolve();
             }
-
-            // Create info object
-            fixedPageViewInfo = {
-                fixedPageView : fixedPageView,
-                pageType : spineObject.fixedLayoutType,
-                isRendered : false,
-                spineIndex : spineObject.spineIndex
-            };
-
             that.get("fixedPages").push(fixedPageViewInfo);
+        });
+        $.when.apply($, initializationDeferreds).done(function() {
+            console.log('all fixed page deferreds done.');
+            // TODO: call once, after the last _.each!
+            finishCallback();
         });
     },
 
@@ -176,8 +207,12 @@ EpubFixed.FixedPageViews = Backbone.Model.extend({
                 fixedPageViewInfo.isRendered = true;
                 fixedPageViewInfo.fixedPageView.hidePage();
 
-                numFixedPages = numFixedPages - 1; 
+                numFixedPages = numFixedPages - 1;
+
+                console.log('rendered page, numfixedpages: ' + numFixedPages);
                 if (numFixedPages === 0) {
+                    console.log('triggering epubLoaded');
+                    console.trace();
                     that.trigger("epubLoaded");
                 }
             });
@@ -220,6 +255,8 @@ EpubFixed.FixedPageViews = Backbone.Model.extend({
     },
 
     initializeImagePage : function (pageSpread, imageSrc, viewerSettings) {
+
+        console.log('initializeImagePage imageSrc: ' + imageSrc);
 
         return new EpubFixed.ImagePageView({
                         pageSpread : pageSpread,
