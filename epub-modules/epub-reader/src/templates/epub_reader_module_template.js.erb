@@ -1,4 +1,4 @@
-var EpubReaderModule = function(readerBoundElement, epubSpineInfo, viewerSettings, packageDocumentDOM, renderStrategy) {
+var EpubReaderModule = function(readerBoundElement, epubSpineInfo, viewerSettings, epubFetch, renderStrategy) {
 
     var EpubReader = {};
 
@@ -11,7 +11,7 @@ var EpubReaderModule = function(readerBoundElement, epubSpineInfo, viewerSetting
         readerElement : readerBoundElement,
         spineInfo : epubSpineInfo,
         viewerSettings : viewerSettings,
-        packageDocumentDOM : packageDocumentDOM,
+        epubFetch : epubFetch,
         renderStrategy : renderStrategy
     });
 

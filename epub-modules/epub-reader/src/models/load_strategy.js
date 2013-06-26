@@ -69,6 +69,7 @@ EpubReader.LoadStrategy = Backbone.Model.extend({
     loadReflowablePagesView : function (spineItem, viewerSettings, annotations, bindings) {
 
         var view = new EpubReflowableModule(
+            this.get('epubFetch'),
             spineItem,
             viewerSettings, 
             annotations, 
@@ -88,6 +89,7 @@ EpubReader.LoadStrategy = Backbone.Model.extend({
     loadFixedPagesView : function (spineItemList, viewerSettings) {
 
         var view = new EpubFixedModule(
+            this.get('epubFetch'),
             spineItemList,
             viewerSettings
         );

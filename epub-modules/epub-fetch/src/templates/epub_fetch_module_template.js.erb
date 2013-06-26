@@ -1,0 +1,55 @@
+var EpubFetchModule = function(packageDocumentURL, libDir) {
+    
+    var EpubFetch = {};
+
+    var EpubFetchBase = Backbone.Model.extend({
+        _handleError: function (err) {
+            console.log(err);
+            console.trace();
+        },
+        parseXml: function (xmlString) {
+            return this.parseMarkup(xmlString, 'text/xml');
+        },
+        parseMarkup: function(markupString, contentType) {
+            var parser = new window.DOMParser;
+            var parsedDom = parser.parseFromString(markupString, contentType);
+            return parsedDom;
+        }
+    });
+
+    // Rationale: The order of these matters
+    <%= discover_content_type %>
+    <%= epub_package_reader %>
+    <%= zip_fetcher %>
+    <%= plain_fetcher %>
+    <%= resource_resolver %>
+
+    var packageReader = new EpubFetch.PackageReader({
+        packageDocumentURL: packageDocumentURL,
+        libDir: libDir
+    });
+
+    // Description: The public interface
+    return {
+        getPackageContentType: function () {
+            return packageReader.getPackageContentType();
+        },
+        getPackageDom: function(callback) {
+            packageReader.getPackageDom(callback);
+        },
+        isPackageExploded: function() {
+            return packageReader.isPackageExploded();
+        },
+        resolveURI: function (epubResourceURI) {
+            return packageReader.resolveURI(epubResourceURI);
+        },
+        relativeToPackageFetchFileContents: function (relativePath, fetchMode, fetchCallback, onerror) {
+            packageReader.relativeToPackageFetchFileContents(relativePath, fetchMode, fetchCallback, onerror);
+        },
+        resolveInternalPackageResources: function(contentDocumentURI, contentDocumentType,
+                                                  contentDocumentText, resolvedDocumentCallback) {
+            packageReader.resolveInternalPackageResources(contentDocumentURI, contentDocumentType, contentDocumentText,
+                resolvedDocumentCallback);
+        }
+    };
+};

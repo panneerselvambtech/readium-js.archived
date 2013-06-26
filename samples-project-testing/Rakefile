@@ -26,18 +26,30 @@ task :copy_dependencies do
   # Import other dependencies
   lib_dependency_filenames = [
       "jquery-1.9.1.js",
+      "jquery.ui.core.js",
+      "jquery.ui.widget.js",
+      "jquery.ui.position.js",
+      "jquery.ui.menu.js",
+      "jquery.ui.autocomplete.js",
       "json2.js",
       "underscore-1.4.4.js",
       "backbone-0.9.10.js",
       "URI-1.10.0.js",
       "modernizr-2.5.3.min.js",
-      "bootstrap.min.js"
+      "bootstrap.min.js",
+      "deflate.js",
+      "inflate.js",
+      "mime-types.js",
+      "zip-ext.js",
+      "zip-fs.js",
+      "zip.js"
   ]
 
   module_dependency_filenames = [
     "epub_cfi.js",
     "epub_module.js",
     "epub_reader_module.js",
+    "epub_fetch_module.js",
     "epub_reflowable_module.js",
     "epub_fixed_module.js",
     "epub_parser_module.js",

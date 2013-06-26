@@ -1,4 +1,4 @@
-var EpubFixedModule = function (spineObjects, viewerSettingsObject) {
+var EpubFixedModule = function (epubFetch, spineObjects, viewerSettingsObject) {
 
     var EpubFixed = {};
 
@@ -12,6 +12,7 @@ var EpubFixedModule = function (spineObjects, viewerSettingsObject) {
     <%= fixed_pagination_view %>
 
     var fixedView = new EpubFixed.FixedPaginationView({
+        epubFetch : epubFetch,
         spineObjects : spineObjects,
         viewerSettings : viewerSettingsObject
     });

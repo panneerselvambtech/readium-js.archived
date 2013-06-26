@@ -14,6 +14,7 @@ EpubReflowable.ReflowablePaginationView = Backbone.View.extend({
         var ViewerModel = Backbone.Model.extend({});
         var SpineItemModel = Backbone.Model.extend({});
 
+        this.epubFetch = options.epubFetch;
         this.viewerModel = new ViewerModel(options.viewerSettings);
         this.viewerModel.set({ syntheticLayout : options.viewerSettings.syntheticLayout });
         this.spineItemModel = new SpineItemModel(options.spineItem);
@@ -53,81 +54,101 @@ EpubReflowable.ReflowablePaginationView = Backbone.View.extend({
 
 	// ------------------------------------------------------------------------------------ //
 	//  "PUBLIC" METHODS (THE API)                                                          //
-	// ------------------------------------------------------------------------------------ //
+    _afterPopulatingContentDocument: function (thatElement, hashFragmentId, goToLastPage) {
+        var that = this;
+        // "Forward" the epubReadingSystem object to the iframe's own window context.
+        // Note: the epubReadingSystem object may not be ready when directly using the
+        // window.onload callback function (from within an (X)HTML5 EPUB3 content document's Javascript code)
+        // To address this issue, the recommended code is:
+        // -----
+        // function doSomething() { console.log(navigator.epubReadingSystem); };
+        //
+        // // With jQuery:
+        // $(document).ready(function () { setTimeout(doSomething, 200); });
+        //
+        // // With the window "load" event:
+        // window.addEventListener("load", function () { setTimeout(doSomething, 200); }, false);
+        //
+        // // With the modern document "DOMContentLoaded" event:
+        // document.addEventListener("DOMContentLoaded", function(e) { setTimeout(doSomething, 200); }, false);
+        // -----
+        if (typeof navigator.epubReadingSystem != 'undefined') {
+            var iFrame = that.getReadiumFlowingContent();
+            var iFrameWindow = iFrame.contentWindow || iFrame.contentDocument.parentWindow;
+            var ers = navigator.epubReadingSystem;
+            iFrameWindow.navigator.epubReadingSystem = ers;
+        }
 
-	render : function (goToLastPage, hashFragmentId) {
+        var lastPageElementId = that.initializeContentDocument();
 
-		var that = this;
-		var json = this.spineItemModel.toJSON();
+        // Rationale: The content document must be paginated in order for the subsequent "go to page" methods
+        //   to have access to the number of pages in the content document.
+        that.paginateContentDocument();
+        // that.mediaOverlayController.pagesLoaded();
 
-        $("iframe", this.el).attr("src", json.contentDocumentURI);
-        $("iframe", this.el).attr("title", json.title);
+        // Rationale: The assumption here is that if a hash fragment is specified, it is the result of Readium
+        //   following a clicked linked, either an internal link, or a link from the table of contents. The intention
+        //   to follow a link should supersede restoring the last-page position, as this should only be done for the
+        //   case where Readium is re-opening the book, from the library view.
+        if (hashFragmentId) {
+            that.showPageByElementId(hashFragmentId);
+        } else if (lastPageElementId) {
+            that.showPageByElementId(lastPageElementId);
+        } else {
 
-		// Wait for iframe to load EPUB content document
-		$(this.getReadiumFlowingContent()).on("load", function (e) {
-
-            // "Forward" the epubReadingSystem object to the iframe's own window context.
-            // Note: the epubReadingSystem object may not be ready when directly using the
-            // window.onload callback function (from within an (X)HTML5 EPUB3 content document's Javascript code)
-            // To address this issue, the recommended code is:
-            // -----
-            // function doSomething() { console.log(navigator.epubReadingSystem); };
-            // 
-            // // With jQuery:
-            // $(document).ready(function () { setTimeout(doSomething, 200); });
-            // 
-            // // With the window "load" event:
-            // window.addEventListener("load", function () { setTimeout(doSomething, 200); }, false);
-            // 
-            // // With the modern document "DOMContentLoaded" event:
-            // document.addEventListener("DOMContentLoaded", function(e) { setTimeout(doSomething, 200); }, false);
-            // -----
-            if (typeof navigator.epubReadingSystem != 'undefined')
-            {
-               var iFrame = that.getReadiumFlowingContent();
-               var iFrameWindow = iFrame.contentWindow || iFrame.contentDocument.parentWindow;
-               var ers = navigator.epubReadingSystem;
-               iFrameWindow.navigator.epubReadingSystem = ers;
+            if (goToLastPage) {
+                // that.pages.goToLastPage(that.viewerModel.get("syntheticLayout"), that.spineItemModel.get("firstPageIsOffset"));
+            } else {
+                that.showPageByNumber(1);
+                // that.pages.goToPage(1, that.viewerModel.get("syntheticLayout"), that.spineItemModel.get("firstPageIsOffset"));
             }
+        }
 
-			var lastPageElementId = that.initializeContentDocument();
+        that.annotations = new EpubReflowable.ReflowableAnnotations({
+            saveCallback: undefined,
+            callbackContext: undefined,
+            contentDocumentDOM: that.getEpubContentDocument().parentNode
+        });
 
-			// Rationale: The content document must be paginated in order for the subsequent "go to page" methods
-			//   to have access to the number of pages in the content document.
-			that.paginateContentDocument();
-			// that.mediaOverlayController.pagesLoaded();
+        that.trigger("contentDocumentLoaded", thatElement);
+    },
+    // ------------------------------------------------------------------------------------ //
 
-			// Rationale: The assumption here is that if a hash fragment is specified, it is the result of Readium 
-			//   following a clicked linked, either an internal link, or a link from the table of contents. The intention
-			//   to follow a link should supersede restoring the last-page position, as this should only be done for the 
-			//   case where Readium is re-opening the book, from the library view. 
-			if (hashFragmentId) {
-                that.showPageByElementId(hashFragmentId);
-            }
-            else if (lastPageElementId) {
-                that.showPageByElementId(lastPageElementId);
-            }
-            else {
+    render : function (goToLastPage, hashFragmentId) {
 
-                if (goToLastPage) {
-                    // that.pages.goToLastPage(that.viewerModel.get("syntheticLayout"), that.spineItemModel.get("firstPageIsOffset"));
-                }
-                else {
-                    that.showPageByNumber(1);
-                    // that.pages.goToPage(1, that.viewerModel.get("syntheticLayout"), that.spineItemModel.get("firstPageIsOffset"));
-                }
-            }
+        var that = this;
+        var json = this.spineItemModel.toJSON();
+        var epubFetch = this.epubFetch;
+        var thatElement = that.el;
 
-            that.annotations = new EpubReflowable.ReflowableAnnotations({
-                saveCallback : undefined,
-                callbackContext : undefined,
-                contentDocumentDOM : that.getEpubContentDocument().parentNode
+        console.log('rendering in IFRAME from URI [' + json.contentDocumentURI + ']');
+        if (epubFetch.isPackageExploded()) {
+
+            $("iframe", thatElement).attr("src", json.contentDocumentURI);
+            $("iframe", thatElement).attr("title", json.title);
+
+            // Wait for iframe to load EPUB content document
+            $(that.getReadiumFlowingContent()).on("load", function (e) {
+                that._afterPopulatingContentDocument(thatElement, hashFragmentId, goToLastPage);
             });
-
-            that.trigger("contentDocumentLoaded", that.el);
-		});
+        } else {
+            epubFetch.relativeToPackageFetchFileContents(json.contentDocumentURI, 'text', function(contentDocumentText) {
+                console.log('rendering document from raw content:');
+                console.log(contentDocumentText);
+                var documentIframe = $("iframe", thatElement);
+                epubFetch.resolveInternalPackageResources(json.contentDocumentURI, json.mediaType, contentDocumentText,
+                    function (resolvedContentDocumentDom) {
+                        var contentDocument = documentIframe[0].contentDocument;
+                        contentDocument.replaceChild(resolvedContentDocumentDom.documentElement,
+                            contentDocument.documentElement);
+                        that._afterPopulatingContentDocument(thatElement, hashFragmentId, goToLastPage);
+                    });
+            }, function(err) {
+                console.error(err);
+            });
+        }
         
-		return this.el;
+		return thatElement;
 	},
     
 	// indicateMoIsPlaying: function () {

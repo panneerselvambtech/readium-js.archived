@@ -233,7 +233,7 @@ Epub.PackageDocument = Backbone.Model.extend({
             }
         }
 
-        return {
+        var spineInfo = {
             contentDocumentURI : this.getManifestItemByIdref(spineItem.get("idref")).contentDocumentURI,
             title : this.metadata.get("title"),
             firstPageIsOffset : false, // This needs to be determined
@@ -244,6 +244,12 @@ Epub.PackageDocument = Backbone.Model.extend({
             fixedLayoutType : fixedLayoutType,
             mediaType : manifestItem.get("media_type")
         };
+        console.log('generated spineInfo for spineItem,');
+        console.log('spineItem:');
+        console.log(spineItem);
+        console.log('generated spineInfo:');
+        console.log(spineInfo);
+        return spineInfo;
     },
 
     getPackageDocumentDOM : function () {
