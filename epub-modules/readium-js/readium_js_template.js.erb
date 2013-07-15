@@ -1,0 +1,62 @@
+<%= epub_reading_system %>
+
+var ReadiumJs = function (elementToBindReaderTo, packageDocumentURL, packageDocumentXML) {
+    
+    // Epub modules
+    var EpubCFI = {};
+    var EpubParser = {};
+    var Epub = {};
+
+    // Rationale: The order of these matters
+    <%= epubcfi %>
+    <%= epub_parser %>
+    <%= epub %>
+
+    
+
+    // -------------- Initialization of viewer ------------------ //
+    var epubParser = new EpubParserModule(packageDocumentURL, packageDocumentXML);
+    var packageDocumentDOM = (new window.DOMParser()).parseFromString(packageDocumentXML, "text/xml");
+    var epub = new EpubModule(epubParser.parse(), packageDocumentXML);
+    
+    // TODO: This is where the viewModel is produced and consumed by the SDK code
+
+    // Description: The ReadiumJs public interface
+    return {
+
+        // epub viewer module api
+        render : function () { 
+            return ; 
+        },
+        showFirstPage : function () {
+            return ;
+        },
+        showSpineItem : function (spineIndex) { 
+            return ; 
+        },
+        showPageByCFI : function (CFI) { 
+            return ; 
+        },
+        showPageByElementId : function (spineIndex, hashFragmentId) { 
+            return ; 
+        },
+        nextPage : function () { 
+            return ; 
+        },
+        previousPage : function () { 
+            return ; 
+        },
+        setSyntheticLayout : function (isSynthetic) { 
+            return ; 
+        },
+        on : function (eventName, callback, callbackContext) { 
+            return ; 
+        },
+        off : function (eventName) { 
+            return ; 
+        },
+        resizeContent : function () { 
+            return ; 
+        }
+    };
+};

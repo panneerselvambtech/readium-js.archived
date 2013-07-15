@@ -34,13 +34,9 @@ task :copy_dependencies do
   module_dependency_filenames = [
     "epub_cfi.js",
     "epub_module.js",
-    "epub_reader_module.js",
-    "epub_reflowable_module.js",
-    "epub_fixed_module.js",
     "epub_parser_module.js",
     "epub_reading_system.js",
-    "SimpleReadium.js",
-    "SimpleReadium_Dev.js"
+    "Readium.js"
   ]
 
   # Get all the lib dependencies
