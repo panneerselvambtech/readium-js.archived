@@ -2,7 +2,7 @@ module.exports = function(grunt) {
     //"use strict"; 
     //This is disabled because it's picking up octal literal notation that is quoted in a string.
     
-    //usage: grunt [server | watch | (--minify &| --syncload)]
+    //usage: grunt [server | watch | (--minify 1 &| --syncload)]
     //server: Start a testing server for the website.
     //watch: Automatically recompile part of the project when files are changed.
     //--minify: Compress the build. (Has no effect when server option in use.)
@@ -21,6 +21,8 @@ module.exports = function(grunt) {
                 baseUrl: "epub-modules/"+epub+"/src",
                 optimize: "none",
                 out: "epub-modules/"+epub+"/out/"+epub_module+".js",
+                useSourceUrl: true,
+                logLevel: 2,
             }
         };
     }
@@ -38,16 +40,18 @@ module.exports = function(grunt) {
             mainConfigFile: "epub-modules/readium-js/build.js",
             name: "Readium",
             baseUrl: "epub-modules/readium-js/src",
-            optimize: grunt.option('minify')?undefined:"none",
+            optimize: grunt.option('minify')?"uglify2":"none",
             out: "epub-modules/readium-js/out/Readium" + 
                 (grunt.option('syncload')?".syncload":"") + 
                 (grunt.option('minify')?".min":"") + ".js",
             include: grunt.option('syncload')?"define-sync":undefined,
             almond: grunt.option('minify'),
             wrap: grunt.option('syncload')?{
-                start: "(function (root, ReadiumModuleFactory) {\nroot.Readium = ReadiumModuleFactory();\n}(this, function () {",
-                end: "var Readium = require('Readium');\nreturn Readium;\n}));",
+                startFile: "epub-modules/readium-js/wrap-sync-start.frag.js",
+                endFile: "epub-modules/readium-js/wrap-sync-end.frag.js",
             }:undefined,
+            useSourceUrl: true,
+            logLevel: 2,
         }
     };
     
@@ -57,7 +61,7 @@ module.exports = function(grunt) {
     ["epub-cfi", "epub-fetch", "epub", "epub-ers", "epub-renderer", ].forEach(function(module) {
         watchTasks[module] = {
             files: ['epub-modules/'+module+'/src/**/*.js'],
-            tasks: ['requirejs:'+module, 'requirejs:readium-js', 'copy', 'notify:watch', ],
+            tasks: ['requirejs:'+module, 'requirejs:readium-js', 'copy', 'notify:done', ],
             options: {
                 livereload: true,
                 interrupt: true,
@@ -66,7 +70,7 @@ module.exports = function(grunt) {
     });
     watchTasks["readium-js"] = {
         files: ['epub-modules/readium-js/src/**/*.js'],
-        tasks: ['requirejs:readium-js', 'copy', 'notify:watch', ],
+        tasks: ['requirejs:readium-js', 'copy', 'notify:done', ],
         options: {
             livereload: true,
             interrupt: true,
@@ -105,12 +109,12 @@ module.exports = function(grunt) {
             
             print_msg_ran: {
                 //Here, we print a friendly, helpful message answering the question, "What do I do next?" While more verbose than it could be, I think it will be very useful when people unfamiliar with the code try to use it. It gives it just a pinch of discoverability.
-                cmd: 'echo -e "\n\n\tNow we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run \'\033[1mgrunt server\033[0m\'.\n\tIf you\'re a developer, you can run \'grunt watch\' to have any changes you make to the source code automatically recompiled.\n\tTo build only the readium project, run \'grunt build_epub_modules\'"'
+                cmd: 'echo "\n\n\tNow we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run \'\033[1mgrunt server\033[0m\'.\n\tIf you\'re a developer, you can run \'grunt watch\' to have any changes you make to the source code automatically recompiled.\n\tTo build only the readium project, run \'grunt build_epub_modules\'"'
             },
         },
         
         notify: {
-            watch: {
+            done: {
                 options: {
                     title: 'Successful recompile.',
                     message: 'Your javascript changes are now live.',
@@ -127,7 +131,8 @@ module.exports = function(grunt) {
     grunt.registerTask('default', 'Compile the readium-web-components project.', [
         'requirejs',            //Builds the libraries we need. 
         'copy',                 //Copy them to the test server. 
-        'exec:print_msg_ran',   //Be useful. Prompt next steps. 
+        'notify:done',          //Be useful. Prompt next steps. 
+        'exec:print_msg_ran',   
     ]);
     
     grunt.registerTask('server', 'Starts a server and opens the testing webpage.', [

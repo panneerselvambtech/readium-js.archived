@@ -84,8 +84,6 @@ var RJSDemoApp = {};
         // This function will retrieve a package document and load an EPUB
         RJSDemoApp.loadAndRenderEpub = function (packageDocumentURL) {
 
-            var that = this;
-
             // Clear the viewer, if it has been defined -> to load a new epub
             RJSDemoApp.epubViewer = undefined;
 
@@ -98,7 +96,7 @@ var RJSDemoApp = {};
             RJSDemoApp.readium = new Readium(elementToBindReaderTo, packageDocumentURL, jsLibDir, function (epubViewer) {
                 RJSDemoApp.epubViewer = epubViewer;
                 RJSDemoApp.epubViewer.openBook();
-                RJSDemoApp.addTOC($("#toc-iframe")[0]);
+                //RJSDemoApp.addTOC($("#toc-iframe")[0]);
                 RJSDemoApp.applyToolbarHandlers();
                 RJSDemoApp.setModuleContainerHeight();
             });
