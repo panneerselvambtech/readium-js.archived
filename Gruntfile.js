@@ -1,6 +1,5 @@
 module.exports = function(grunt) {
-    //"use strict"; 
-    //This is disabled because it's picking up octal literal notation that is quoted in a string.
+    "use strict"; 
     
     //usage: grunt [server | watch | (--minify 1 &| --syncload)]
     //server: Start a testing server for the website.
@@ -27,7 +26,7 @@ module.exports = function(grunt) {
         };
     }
     
-    [    {folder_name:"epub",          output_file:"epub_module"},
+    [   {folder_name:"epub",          output_file:"epub_module"},
         {folder_name:"epub-cfi",      output_file:"cfi_module"},
         {folder_name:"epub-ers",      output_file:"epub_reading_system"},
         {folder_name:"epub-fetch",    output_file:"epub_fetch_module"},
@@ -109,7 +108,7 @@ module.exports = function(grunt) {
             
             print_msg_ran: {
                 //Here, we print a friendly, helpful message answering the question, "What do I do next?" While more verbose than it could be, I think it will be very useful when people unfamiliar with the code try to use it. It gives it just a pinch of discoverability.
-                cmd: 'echo "\n\n\tNow we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run \'\033[1mgrunt server\033[0m\'.\n\tIf you\'re a developer, you can run \'grunt watch\' to have any changes you make to the source code automatically recompiled.\n\tTo build only the readium project, run \'grunt build_epub_modules\'"'
+                cmd: 'echo "\n\n\tNow we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run \'\\033[1mgrunt server\\033[0m\'.\n\tIf you\'re a developer, you can run \'grunt watch\' to have any changes you make to the source code automatically recompiled.\n\tTo build only the readium project, run \'grunt build_epub_modules\'"'
             },
         },
         
