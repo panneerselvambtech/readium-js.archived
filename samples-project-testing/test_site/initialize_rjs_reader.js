@@ -7,6 +7,7 @@ var RJSDemoApp = {};
         jquery: 'jquery-1.9.1',
         underscore: 'underscore-1.4.4',
         backbone: 'backbone-0.9.10',
+        jquerySizes: 'jquery.sizes',
         Readium: './readium-js/Readium'
         //Readium: './readium-js/Readium.min'
     };
@@ -20,13 +21,16 @@ var RJSDemoApp = {};
             backbone: {
                 deps: ['underscore', 'jquery'],
                 exports: 'Backbone'
-            }
+            },
+	        jquerySizes: {
+	            deps: ['jquery']
+	        },
         },
         paths: pathsReadium
     });
 
-    require(['jquery', 'underscore', 'Readium', '../test_site/event_handling'],
-        function ($, _, Readium,  EventHandling) {
+    require(['jquery', 'underscore', 'Readium', '../test_site/event_handling', 'jquerySizes'],
+        function ($, _, Readium,  EventHandling, jquerySizes) {
 
         RJSDemoApp.setModuleContainerHeight = function () {
             $("#epubContentIframe").css({
