@@ -98,17 +98,9 @@ module.exports = function(grunt) {
         },
         
         exec: {
-            print_server_message: {
-                cmd: 'echo "Now serving the example site for you at http://localhost:3000/test_site/reader_view.html."',
-            },
             start_example_server: {
                 cmd: 'node test_site_server.js',
                 cwd: 'samples-project-testing',
-            },
-            
-            print_msg_ran: {
-                //Here, we print a friendly, helpful message answering the question, "What do I do next?" While more verbose than it could be, I think it will be very useful when people unfamiliar with the code try to use it. It gives it just a pinch of discoverability.
-                cmd: 'echo "\n\n\tNow we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run \'\\033[1mgrunt server\\033[0m\'.\n\tIf you\'re a developer, you can run \'grunt watch\' to have any changes you make to the source code automatically recompiled.\n\tTo build only the readium project, run \'grunt build_epub_modules\'"'
             },
         },
         
@@ -127,15 +119,31 @@ module.exports = function(grunt) {
     //Load all our package.json-included grunt modules.
     require('load-grunt-tasks')(grunt);
     
+    
+    grunt.registerTask('msg', 'Print a helpful message. (:server or :ran)', function(msg) {
+        var width = 80;
+        switch(msg) { 
+            case 'server': grunt.log.writeln(grunt.log.wraptext(width, "Now serving the example site for you at"));
+                           grunt.log.subhead("http://localhost:3000/test_site/reader_view.html");
+                           break;
+            case 'ran': grunt.log.subhead("What Next?");
+                        grunt.log.writeln(grunt.log.wraptext(width, "Now we\'ve compiled the javascript files. We can include them in our project, as shown in the example in samples-project-testing/test_site. To view the site, run"));
+                        grunt.log.ok("grunt server");
+                        grunt.log.writeln(grunt.log.wraptext(width, "\nIf you\'re a developer, you can make grunt automatically recompile the javascript when changes are made. (This is a partial recompile, faster than the default build.) Run:"));
+                        grunt.log.ok("grunt watch");
+                        grunt.log.writeln(grunt.log.wraptext(width, "\nTo build only the readium project, run 'grunt build_epub_modules'. You may specify --minify 1 and/or --syncload to compress and enable synchronous loading, a.k.a. tag loading, of the Javascript."));
+        }
+    });
+    
     grunt.registerTask('default', 'Compile the readium-web-components project.', [
         'requirejs',            //Builds the libraries we need. 
         'copy',                 //Copy them to the test server. 
         'notify:done',          //Be useful. Prompt next steps. 
-        'exec:print_msg_ran',   
+        'msg:ran',   
     ]);
     
     grunt.registerTask('server', 'Starts a server and opens the testing webpage.', [
-        'exec:print_server_message',
+        'msg:server',
         'exec:start_example_server',
     ]);
 };
