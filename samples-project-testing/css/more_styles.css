@@ -15,5 +15,5 @@ body, div.container-fluid, div.row-fluid, #library-panel, #epubContentIframe, #v
 
 #epubContentIframe {
 	/*Height is set in initialize_rjs_reader.js*/
-	height: calc(100% - 100px);
+	overflow: hidden;
 }
